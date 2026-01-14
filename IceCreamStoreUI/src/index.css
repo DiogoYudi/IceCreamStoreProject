@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-black-changed: rgb(28, 27, 38);
+  --color-black-options: rgb(31, 30, 35);
+  --color-purple-options: rgb(109, 73, 189);
+  --color-purple-optionshover: rgb(53, 43, 81);
+  --color-black-border: rgb(28, 27, 50);
+  --color-purple-backgroundbody: rgb(44, 37, 62);
+  --color-gray-backgroundbody: rgb(227, 224, 234);
+  --color-purple-items: rgb(38, 34, 56);
+  --color-purple-itemsheader: rgb(53, 43, 84);
+  --color-purple-border: rgb(65, 58, 80);
+}
