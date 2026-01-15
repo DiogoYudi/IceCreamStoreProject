@@ -1,50 +1,90 @@
+import { useState } from "react";
+
 function Stock() {
+  const [filter, setFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appliedFilter ,setAppliedFilter] = useState("");
+  const options = [
+    { code: 1, name: "Balde" },
+    { code: 2, name: "Pote 2L" },
+    { code: 3, name: "Pote 1L" },
+  ];
+
+  const items = [
+    { id: 1, name: "Pote 2L", flavour: "Morango", quantity: 25 },
+    { id: 2, name: "Pote 2L", flavour: "Chocolate", quantity: 30 },
+    { id: 3, name: "Balde", flavour: "Morango", quantity: 5 },
+    { id: 4, name: "Pote 1L", flavour: "Morango", quantity: 15 }
+  ];
+
+  const filteredItems = items.filter((item) => {
+    const matchesSelect = filter ? item.name === filter : true;
+
+    const matchesSearch = appliedFilter === "" ? true : item.name.toLowerCase().includes(appliedFilter.toLowerCase()) || item.flavour.toLowerCase().includes(appliedFilter.toLowerCase());
+
+    return matchesSelect && matchesSearch;
+  });
+
   return (
     <div className="ml-0 md:ml-40 h-[calc(100vh-40px)] bg-purple-backgroundbody flex flex-col">
-      <div className="bg-gray-backgroundbody h-[10%] flex items-center pl-5">
+      <div className="bg-gray-backgroundbody h-[10%] flex justify-between items-center px-5">
         <h1 className="text-purple-950 font-bold text-lg opacity-85">Stock</h1>
+        <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[10%] h-[70%] cursor-pointer hover:scale-110">Novo Estoque</button>
       </div>
       <div className="flex flex-col items-center pt-7 gap-7 relative">
         <div className="flex w-[90%] h-10 justify-between">
-          <button className="bg-purple-items border w-[10%] text-gray-300 rounded-md cursor-pointer">
-            Pesquisa
+          <button onClick={() => setAppliedFilter(searchTerm)} className="bg-purple-items border w-[10%] text-gray-300 rounded-md cursor-pointer">
+            Pesquisar
           </button>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="bg-purple-items border w-[10%] pl-2 text-gray-300 rounded-md">
+            <option value="">Todos</option>
+            {options.map((o) => (
+              <option key={o.code} value={o.name}>{o.name}</option>
+            ))}
+          </select>
           <input
             type="text"
             placeholder="🔍 Pesquisar"
-            className="bg-purple-items w-[50%] rounded-md mr-auto ml-5 pl-5 text-gray-400"
+            className="bg-purple-items w-[50%] rounded-md pl-5 text-gray-400"
+            value = {searchTerm}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchTerm(e.target.value)
+              if(value===""){
+                setAppliedFilter("");
+                setFilter("");
+              }
+              else setFilter("")
+            }}
           />
-          <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[15%] cursor-pointer hover:scale-110">
-            Nova Venda
+          <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110">
+            Entrada Estoque
+          </button>
+          <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110">
+            Saida Estoque
           </button>
         </div>
         <div className="relative w-[90%] h-91 overflow-y-auto bg-purple-items shadow-lg rounded-xl">
           <div className="w-full max-h-91 overflow-auto">
             <div className="grid grid-cols-4 bg-purple-itemsheader text-white font-bold sticky top-0 z-10">
               <div className="px-4 py-2 border-r border-purple-border">
-                Data e Hora
+                Tipo
               </div>
               <div className="px-4 py-2 border-r border-purple-border">
-                Mesa
+                Sabor
               </div>
               <div className="px-4 py-2 border-r border-purple-border">
-                Itens
+                Quantidade
               </div>
-              <div className="px-4 py-2 text-right">Valor Total</div>
             </div>
             <div className="grid grid-rows-auto">
-              <div className="grid grid-cols-4 border-b border-purple-border text-white">
-                <div className="px-4 py-2">11/11 19:00</div>
-                <div className="px-4 py-2">1</div>
-                <div className="px-4 py-2">Copinho 2 Bolas, Cascão 2 Bolas</div>
-                <div className="px-4 py-2 text-right">R$ 17,00</div>
-              </div>
-              <div className="grid grid-cols-4 border-b border-purple-border text-white">
-                <div className="px-4 py-2">15/11 19:00</div>
-                <div className="px-4 py-2">5</div>
-                <div className="px-4 py-2">Copinho 2 Bolas, Cascão 2 Bolas</div>
-                <div className="px-4 py-2 text-right">R$ 17,00</div>
-              </div>
+              {filteredItems.map((item) => (
+                <div key={item.id} className="grid grid-cols-4 border-b border-purple-border text-white">
+                  <div className="px-4 py-2">{item.name}</div>
+                  <div className="px-4 py-2">{item.flavour}</div>
+                  <div className="px-4 py-2">{item.quantity}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
