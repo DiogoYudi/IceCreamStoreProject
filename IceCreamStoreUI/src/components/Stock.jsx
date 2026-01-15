@@ -1,13 +1,13 @@
 function Stock() {
   return (
-    <div className="ml-0 md:ml-40 h-screen bg-purple-backgroundbody flex flex-col">
+    <div className="ml-0 md:ml-40 h-[calc(100vh-40px)] bg-purple-backgroundbody flex flex-col">
       <div className="bg-gray-backgroundbody h-[10%] flex items-center pl-5">
         <h1 className="text-purple-950 font-bold text-lg opacity-85">Stock</h1>
       </div>
       <div className="flex flex-col items-center pt-7 gap-7 relative">
         <div className="flex w-[90%] h-10 justify-between">
           <button className="bg-purple-items border w-[10%] text-gray-300 rounded-md cursor-pointer">
-            Pesquisar
+            Pesquisa
           </button>
           <input
             type="text"

@@ -1,6 +1,6 @@
 function Sale() {
   return (
-    <div className="ml-0 md:ml-40 h-screen bg-purple-backgroundbody flex flex-col">
+    <div className="ml-0 md:ml-40 h-[calc(100vh-40px)] bg-purple-backgroundbody flex flex-col">
       <div className="bg-gray-backgroundbody h-[10%] flex items-center pl-5">
         <h1 className="text-purple-950 font-bold text-lg opacity-85">Vendas</h1>
       </div>
