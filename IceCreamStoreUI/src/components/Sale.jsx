@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 function Sale() {
@@ -34,6 +34,12 @@ function Sale() {
       active: false,
     },
   ];
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value);
 
   const filteredItems = items.filter((item) => {
     const matchesSearch =
@@ -105,7 +111,7 @@ function Sale() {
                       </button>
                     </div>
                     <div className="px-4 py-2">
-                      R$ {item.totalPrice}
+                      {formatCurrency(item.totalPrice)}
                     </div>
                     <div className="px-4 py-2 text-center">
                       <div className="w-[10%]">

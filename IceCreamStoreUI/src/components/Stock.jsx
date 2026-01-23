@@ -28,7 +28,7 @@ function Stock() {
   return (
     <div className="ml-0 md:ml-40 h-[calc(100vh-40px)] bg-purple-backgroundbody flex flex-col">
       <div className="bg-gray-backgroundbody h-[10%] flex justify-between items-center px-5">
-        <h1 className="text-purple-950 font-bold text-lg opacity-85">Stock</h1>
+        <h1 className="text-purple-950 font-bold text-lg opacity-85">Estoque</h1>
         <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[10%] h-[70%] cursor-pointer hover:scale-110">Novo Estoque</button>
       </div>
       <div className="flex flex-col items-center pt-7 gap-7 relative">
