@@ -9,5 +9,4 @@ public class SystemIcecreamstoreApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SystemIcecreamstoreApplication.class, args);
 	}
-
 }
