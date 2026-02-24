@@ -1,21 +1,19 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import StockService from "../service/StockService";
 
 function Stock() {
+  const [stock, setStock] = useState([]);
   const [filter, setFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedFilter, setAppliedFilter] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedNewStock, setSelectedNewStock] = useState(null);
   const [selectedAddStock, setSelectedAddStock] = useState(null);
+  const [selectedRemoveStock, setSelectedRemoveStock] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [newQuantity, setNewQuantity] = useState(null);
+  const [newQuantity, setNewQuantity] = useState("");
   const [newType, setNewType] = useState("");
-  const [newStock, setNewStock] = useState({
-    type: "",
-    flavour: "",
-    quantity: "",
-  });
 
   const options = [
     { code: 1, name: "Balde", isDisabled: false },
@@ -24,36 +22,97 @@ function Stock() {
     { code: 4, name: "Palito", isDisabled: true },
   ];
 
-  const items = [
-    { id: 1, name: "Pote 2L", flavour: "Morango", quantity: 25 },
-    { id: 2, name: "Pote 2L", flavour: "Chocolate", quantity: 30 },
-    { id: 3, name: "Balde", flavour: "Morango", quantity: 5 },
-    { id: 4, name: "Pote 1L", flavour: "Morango", quantity: 15 },
-    { id: 5, name: "Palito", quantity: 15 },
-  ];
+  const [newStock, setNewStock] = useState({
+    type: options[0].name,
+    flavour: "",
+    quantity: "",
+  });
 
   // Separando os itens com e sem sabor
-  const itemsWithFlavour = items.filter((item) => item.flavour);
-  const itemsWithoutFlavour = items.filter((item) => !item.flavour);
+  const itemsWithFlavour = stock.filter((item) => item.flavour);
+  const itemsWithoutFlavour = stock.filter((item) => !item.flavour);
 
   // Aplicando filtros
-  const filteredWithFlavour = itemsWithFlavour.filter((item) => {
-    const matchesSelect = filter ? item.name === filter : true;
-    const matchesSearch =
-      appliedFilter === ""
-        ? true
-        : item.name.toLowerCase().includes(appliedFilter.toLowerCase()) ||
-          item.flavour.toLowerCase().includes(appliedFilter.toLowerCase());
-    return matchesSelect && matchesSearch;
-  });
+  const filteredWithFlavour = itemsWithFlavour
+    .filter((item) => {
+      const matchesSelect = filter ? item.type === filter : true;
+      const matchesSearch =
+        appliedFilter === ""
+          ? true
+          : item.type.toLowerCase().includes(appliedFilter.toLowerCase()) ||
+            item.flavour.toLowerCase().includes(appliedFilter.toLowerCase());
+      return matchesSelect && matchesSearch;
+    })
+    .sort((a, b) => a.type.localeCompare(b.type));
 
-  const filteredWithoutFlavour = itemsWithoutFlavour.filter((item) => {
-    return filter ? item.name === filter : true;
-  });
+  const filteredWithoutFlavour = itemsWithoutFlavour
+    .filter((item) => {
+      return filter ? item.type === filter : true;
+    })
+    .sort((a, b) => a.type.localeCompare(b.type));
 
-  const addStock = () => {
-    // Função de adicionar estoque (a implementar)
+  // Adicionar novo item do estoque
+  const addNewStock = (e) => {
+    e.preventDefault();
+    StockService.addStock(newStock)
+      .then(() => {
+        setSelectedNewStock(null);
+        setNewStock({
+          type: "",
+          flavour: "",
+          quantity: "",
+        });
+        StockService.getStock()
+          .then((response) => {
+            setStock(response.data);
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   };
+
+  // Alterar a quantidade do estoque
+  const updateStockQuantity = (e, operation) => {
+    e.preventDefault();
+
+    if (!selectedItem || !newQuantity) return; // proteção
+
+    const updatedStock = {
+      id: selectedItem.id,
+      type: selectedItem.type,
+      flavour: selectedItem.flavour,
+      quantity:
+        operation === "add"
+          ? selectedItem.quantity + Number(newQuantity)
+          : selectedItem.quantity - Number(newQuantity),
+    };
+
+    StockService.updateStock(updatedStock, updatedStock.id).then((response) => {
+      // Limpa seleção e input
+      if (operation === "add") setSelectedAddStock(null);
+      else setSelectedRemoveStock(null);
+
+      setNewQuantity("");
+
+      // Atualiza o array de estoque
+      setStock(
+        stock.map((s) => (s.id === response.data.id ? response.data : s)),
+      );
+    });
+  };
+
+  // Get
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await StockService.getStock();
+        setStock(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="ml-0 md:ml-40 h-[calc(100vh-40px)] bg-purple-backgroundbody flex flex-col">
@@ -108,6 +167,8 @@ function Stock() {
               } else setFilter("");
             }}
           />
+
+          {/* Botão de entrada e saída */}
           <button
             onClick={(e) => {
               setSelectedAddStock(e);
@@ -117,10 +178,18 @@ function Stock() {
           >
             Entrada Estoque
           </button>
-          <button className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110">
+          <button
+            onClick={(e) => {
+              setSelectedRemoveStock(e);
+              setSelectedOption(options[0]);
+            }}
+            className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110"
+          >
             Saida Estoque
           </button>
         </div>
+
+        {/* Header */}
         <div className="relative w-[90%] h-91 overflow-y-auto flex gap-4">
           <div className="flex-1 bg-purple-items shadow-lg rounded-xl overflow-auto">
             {filteredWithFlavour.length > 0 && (
@@ -136,20 +205,23 @@ function Stock() {
                     Quantidade
                   </div>
                 </div>
-                {filteredWithFlavour.map((item) => (
+
+                {/* Lista do estoque com sabor */}
+                {filteredWithFlavour.map((stock) => (
                   <div
-                    key={item.id}
+                    key={stock.id}
                     className="grid grid-cols-3 border-b border-purple-border text-white"
                   >
-                    <div className="px-4 py-2">{item.name}</div>
-                    <div className="px-4 py-2">{item.flavour}</div>
-                    <div className="px-4 py-2">{item.quantity}</div>
+                    <div className="px-4 py-2">{stock.type}</div>
+                    <div className="px-4 py-2">{stock.flavour}</div>
+                    <div className="px-4 py-2">{stock.quantity}</div>
                   </div>
                 ))}
               </>
             )}
           </div>
           <div className="flex-1 bg-purple-items shadow-lg rounded-xl overflow-auto">
+            {/* Lista do estoque sem sabor */}
             {filteredWithoutFlavour.length > 0 && (
               <>
                 <div className="grid grid-cols-2 bg-purple-itemsheader text-white font-bold sticky top-0 z-10">
@@ -160,13 +232,13 @@ function Stock() {
                     Quantidade
                   </div>
                 </div>
-                {filteredWithoutFlavour.map((item) => (
+                {filteredWithoutFlavour.map((stock) => (
                   <div
-                    key={item.id}
+                    key={stock.id}
                     className="grid grid-cols-2 border-b border-purple-border text-white"
                   >
-                    <div className="px-4 py-2">{item.name}</div>
-                    <div className="px-4 py-2">{item.quantity}</div>
+                    <div className="px-4 py-2">{stock.type}</div>
+                    <div className="px-4 py-2">{stock.quantity}</div>
                   </div>
                 ))}
               </>
@@ -174,6 +246,7 @@ function Stock() {
           </div>
         </div>
 
+        {/* Novo estoque */}
         {selectedNewStock && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
@@ -188,6 +261,7 @@ function Stock() {
                     setSelectedOption(
                       options.find((o) => o.name === e.target.value),
                     );
+                    setNewStock({ ...newStock, type: e.target.value });
                   }}
                   className="border-b w-[40%] pl-2 text-white focus:bg-gray-900"
                 >
@@ -219,7 +293,7 @@ function Stock() {
                 />
                 <div>
                   <button
-                    onClick={addStock}
+                    onClick={addNewStock}
                     className="bg-purple-800 text-gray-400 font-bold rounded-sm shadow px-5 flex justify-center items-center cursor-pointer hover:scale-110"
                   >
                     Cadastrar
@@ -239,6 +313,7 @@ function Stock() {
           </div>
         )}
 
+        {/* Entrada */}
         {selectedAddStock && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-gray-900 p-5 rounded-lg w-full max-w-md max-h-[70vh] overflow-auto">
@@ -246,6 +321,7 @@ function Stock() {
                 <h2 className="text-white font-bold text-lg">
                   Selecione o Produto
                 </h2>
+                {/* IMPLEMENTAR UM FILTRO PARA FACILITAR A BUSCA DO ESTOQUE*/}
                 <button
                   onClick={() => {
                     setSelectedAddStock(false);
@@ -259,7 +335,7 @@ function Stock() {
               </div>
 
               <div className="max-h-48 overflow-auto mb-4">
-                {items.map((item) => (
+                {stock.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
@@ -271,7 +347,7 @@ function Stock() {
                   >
                     <div className="text-gray-200">{item.name}</div>
                     <div className="text-sm text-gray-300">
-                      {item.flavour || ""}
+                      {item.type} {item.flavour || ""}
                     </div>
                     <div className="text-xs text-gray-400">
                       Quantidade atual: {item.quantity}
@@ -280,6 +356,7 @@ function Stock() {
                 ))}
               </div>
 
+              {/* Selecionar item */}
               {selectedItem && (
                 <>
                   <label className="text-white block mb-2">
@@ -292,8 +369,78 @@ function Stock() {
                     onChange={(e) => setNewQuantity(e.target.value)}
                     className="w-full p-2 rounded bg-gray-800 text-white mb-4"
                   />
-                  <button className="w-full text-gray-300 bg-gray-700 py-2 rounded hover:scale-105 transition-transform">
+                  <button
+                    onClick={(e) => updateStockQuantity(e, "add")}
+                    className="w-full text-gray-300 bg-gray-700 py-2 rounded hover:scale-105 transition-transform"
+                  >
                     Adicionar Estoque
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Saida */}
+        {selectedRemoveStock && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-gray-900 p-5 rounded-lg w-full max-w-md max-h-[70vh] overflow-auto">
+              <div className="flex items-center justify-between pb-4">
+                <h2 className="text-white font-bold text-lg">
+                  Selecione o Produto
+                </h2>
+                {/* IMPLEMENTAR UM FILTRO PARA FACILITAR A BUSCA DO ESTOQUE*/}
+                <button
+                  onClick={() => {
+                    setSelectedRemoveStock(null);
+                    setSelectedItem(null);
+                    setNewQuantity("");
+                  }}
+                  className="text-white hover:bg-red-600"
+                >
+                  <X />
+                </button>
+              </div>
+
+              <div className="max-h-48 overflow-auto mb-4">
+                {stock.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className={`p-3 mb-2 rounded cursor-pointer ${
+                      selectedItem?.id === item.id
+                        ? "bg-purple-600"
+                        : "bg-gray-800"
+                    }`}
+                  >
+                    <div className="text-gray-200">{item.name}</div>
+                    <div className="text-sm text-gray-300">
+                      {item.type} {item.flavour || ""}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Quantidade atual: {item.quantity}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {selectedItem && (
+                <>
+                  <label className="text-white block mb-2">
+                    Quantidade da saída:
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newQuantity}
+                    onChange={(e) => setNewQuantity(e.target.value)}
+                    className="w-full p-2 rounded bg-gray-800 text-white mb-4"
+                  />
+                  <button
+                    onClick={(e) => updateStockQuantity(e, "remove")}
+                    className="w-full text-gray-300 bg-gray-700 py-2 rounded hover:scale-105 transition-transform"
+                  >
+                    Saida do Estoque
                   </button>
                 </>
               )}
