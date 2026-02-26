@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import StockService from "../service/StockService";
+import TypeService from "../service/TypeService";
 
 function Stock() {
   const [stock, setStock] = useState([]);
@@ -8,6 +9,7 @@ function Stock() {
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedFilter, setAppliedFilter] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedNewType, setSelectedNewType] = useState(null);
   const [selectedNewStock, setSelectedNewStock] = useState(null);
   const [selectedAddStock, setSelectedAddStock] = useState(null);
   const [selectedRemoveStock, setSelectedRemoveStock] = useState(null);
@@ -15,12 +17,12 @@ function Stock() {
   const [newQuantity, setNewQuantity] = useState("");
   const [newType, setNewType] = useState("");
 
-  const options = [
+  const [options, setOptions] = useState([
     { code: 1, name: "Balde", isDisabled: false },
     { code: 2, name: "Pote 2L", isDisabled: false },
     { code: 3, name: "Pote 1L", isDisabled: false },
     { code: 4, name: "Palito", isDisabled: true },
-  ];
+  ]);
 
   const [newStock, setNewStock] = useState({
     type: options[0].name,
@@ -50,6 +52,21 @@ function Stock() {
       return filter ? item.type === filter : true;
     })
     .sort((a, b) => a.type.localeCompare(b.type));
+
+  // Adicionar nova categoria dos items
+  const addNewType = (e) => {
+    e.preventDefault();
+    TypeService.addType(newType)
+      .then(() => {
+        setSelectedNewType(null);
+        TypeService.getType()
+          .then((response) => {
+            setOptions(response.data);
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
+  };
 
   // Adicionar novo item do estoque
   const addNewStock = (e) => {
@@ -121,15 +138,28 @@ function Stock() {
         <h1 className="text-purple-950 font-bold text-lg opacity-85">
           Estoque
         </h1>
-        <button
-          onClick={(e) => {
-            setSelectedNewStock(e);
-            setSelectedOption(options[0]);
-          }}
-          className="bg-purple-options text-gray-300 rounded-sm shadow w-[10%] h-[70%] cursor-pointer hover:scale-110"
-        >
-          Novo Estoque
-        </button>
+        <div className="flex gap-3 w-[30%]">
+          {/* Botão secundário: Nova Categoria */}
+          <button
+            onClick={(e) => {
+              setSelectedNewType(e);
+            }}
+            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
+          >
+            Nova Categoria
+          </button>
+
+          {/* Botão principal: Novo Estoque */}
+          <button
+            onClick={(e) => {
+              setSelectedNewStock(e);
+              setSelectedOption(options[0]);
+            }}
+            className="bg-purple-options text-white rounded-md px-4 py-2 shadow-md cursor-pointer hover:scale-110 transition"
+          >
+            Novo Estoque
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -174,7 +204,7 @@ function Stock() {
               setSelectedAddStock(e);
               setSelectedOption(options[0]);
             }}
-            className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110"
+            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
           >
             Entrada Estoque
           </button>
@@ -183,7 +213,7 @@ function Stock() {
               setSelectedRemoveStock(e);
               setSelectedOption(options[0]);
             }}
-            className="bg-purple-options text-gray-300 rounded-sm shadow w-[12%] cursor-pointer hover:scale-110"
+            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
           >
             Saida Estoque
           </button>
@@ -245,6 +275,41 @@ function Stock() {
             )}
           </div>
         </div>
+
+        {/* Nova categoria */}
+        {selectedNewType && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+              <h2 className="text-purple-400 font-bold text-lg opacity-85">
+                Nova Categoria
+              </h2>
+              <ul className="space-y-2 py-5 flex flex-col gap-5">
+                <input
+                  type="text"
+                  className="text-white border-b border-gray-700 w-[40%] pl-2"
+                  placeholder="Nova Categoria"
+                  onChange={(e) => setNewType(e.target.value)}
+                />
+                <div>
+                  <button
+                    onClick={addNewType}
+                    className="bg-purple-800 text-gray-400 font-bold rounded-sm shadow px-5 flex justify-center items-center cursor-pointer hover:scale-110"
+                  >
+                    Cadastrar
+                  </button>
+                </div>
+              </ul>
+              <button
+                onClick={() => {
+                  setSelectedNewType(null);
+                }}
+                className="mt-4 w-full bg-purple-600 py-2 rounded cursor-pointer hover:scale-105"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Novo estoque */}
         {selectedNewStock && (
