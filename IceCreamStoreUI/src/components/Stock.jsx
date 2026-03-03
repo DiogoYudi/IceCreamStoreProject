@@ -14,18 +14,17 @@ function Stock() {
   const [selectedAddStock, setSelectedAddStock] = useState(null);
   const [selectedRemoveStock, setSelectedRemoveStock] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [alreadyExist, setAlreadyExist] = useState(null);
   const [newQuantity, setNewQuantity] = useState("");
-  const [newType, setNewType] = useState("");
+  const [newType, setNewType] = useState({
+    name: "",
+    isDisabled: false,
+  });
 
-  const [options, setOptions] = useState([
-    { code: 1, name: "Balde", isDisabled: false },
-    { code: 2, name: "Pote 2L", isDisabled: false },
-    { code: 3, name: "Pote 1L", isDisabled: false },
-    { code: 4, name: "Palito", isDisabled: true },
-  ]);
+  const [options, setOptions] = useState([]);
 
   const [newStock, setNewStock] = useState({
-    type: options[0].name,
+    type: options[0] ? options[0].name : "",
     flavour: "",
     quantity: "",
   });
@@ -56,9 +55,14 @@ function Stock() {
   // Adicionar nova categoria dos items
   const addNewType = (e) => {
     e.preventDefault();
+    if (options.some((option) => option.name === newType.name)) {
+      setAlreadyExist(e);
+      return;
+    }
     TypeService.addType(newType)
       .then(() => {
         setSelectedNewType(null);
+        setNewType({ name: "", isDisabled: false });
         TypeService.getType()
           .then((response) => {
             setOptions(response.data);
@@ -124,6 +128,9 @@ function Stock() {
       try {
         const response = await StockService.getStock();
         setStock(response.data);
+        const response2 = await TypeService.getType();
+        setOptions(response2.data);
+        console.log(response2.data);
       } catch (error) {
         console.log(error);
       }
@@ -144,7 +151,7 @@ function Stock() {
             onClick={(e) => {
               setSelectedNewType(e);
             }}
-            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
+            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 whitespace-nowrap hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
           >
             Nova Categoria
           </button>
@@ -155,7 +162,7 @@ function Stock() {
               setSelectedNewStock(e);
               setSelectedOption(options[0]);
             }}
-            className="bg-purple-options text-white rounded-md px-4 py-2 shadow-md cursor-pointer hover:scale-110 transition"
+            className="bg-purple-options text-white whitespace-nowrap rounded-md px-4 py-2 shadow-md cursor-pointer hover:scale-110 transition"
           >
             Novo Estoque
           </button>
@@ -178,7 +185,7 @@ function Stock() {
           >
             <option value="">Todos</option>
             {options.map((o) => (
-              <option key={o.code} value={o.name}>
+              <option key={o.id} value={o.name}>
                 {o.name}
               </option>
             ))}
@@ -204,7 +211,7 @@ function Stock() {
               setSelectedAddStock(e);
               setSelectedOption(options[0]);
             }}
-            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
+            className="bg-[#5b4b8a] text-white whitespace-nowrap rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
           >
             Entrada Estoque
           </button>
@@ -213,7 +220,7 @@ function Stock() {
               setSelectedRemoveStock(e);
               setSelectedOption(options[0]);
             }}
-            className="bg-[#5b4b8a] text-white rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
+            className="bg-[#5b4b8a] text-white whitespace-nowrap rounded-md px-4 py-2 hover:bg-[#6d5ca3] transition cursor-pointer hover:scale-110"
           >
             Saida Estoque
           </button>
@@ -284,12 +291,53 @@ function Stock() {
                 Nova Categoria
               </h2>
               <ul className="space-y-2 py-5 flex flex-col gap-5">
-                <input
-                  type="text"
-                  className="text-white border-b border-gray-700 w-[40%] pl-2"
-                  placeholder="Nova Categoria"
-                  onChange={(e) => setNewType(e.target.value)}
-                />
+                <div>
+                  <input
+                    type="text"
+                    className="text-white border-b border-gray-700 w-[40%] pl-2"
+                    placeholder="Nova Categoria"
+                    onChange={(e) => {
+                      setNewType({
+                        ...newType,
+                        name: e.target.value
+                          .toLowerCase()
+                          .replace(/\b\w/g, (c) => c.toUpperCase())
+                          .replace(
+                            /(\d+)\s*(l|ml)\b/g,
+                            (_, num, unit) => `${num}${unit.toUpperCase()}`,
+                          ),
+                      });
+                      setAlreadyExist(null);
+                    }}
+                  />
+                  {alreadyExist && (
+                    <p className="text-red-500 pl-2 text-xs">
+                      Essa categoria já existe
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center">
+                  <label
+                    htmlFor="isDisabled"
+                    className="text-white opacity-85 px-2 leading-none"
+                  >
+                    Esta categoria exige sabor
+                  </label>
+                  <input
+                    type="checkbox"
+                    className="w-3 h-3 accent-purple-600"
+                    id="isDisabled"
+                    checked={newType.isDisabled}
+                    onChange={(e) =>
+                      setNewType({
+                        ...newType,
+                        isDisabled: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+
                 <div>
                   <button
                     onClick={addNewType}
@@ -302,6 +350,8 @@ function Stock() {
               <button
                 onClick={() => {
                   setSelectedNewType(null);
+                  setAlreadyExist(null);
+                  setNewType({ name: "", isDisabled: false });
                 }}
                 className="mt-4 w-full bg-purple-600 py-2 rounded cursor-pointer hover:scale-105"
               >
@@ -331,12 +381,12 @@ function Stock() {
                   className="border-b w-[40%] pl-2 text-white focus:bg-gray-900"
                 >
                   {options.map((o) => (
-                    <option key={o.code} value={o.name}>
+                    <option key={o.id} value={o.name}>
                       {o.name}
                     </option>
                   ))}
                 </select>
-                {selectedOption && !selectedOption.isDisabled && (
+                {selectedOption && selectedOption.disabled && (
                   <input
                     type="text"
                     className="text-white border-b border-gray-700 w-[40%] pl-2"
